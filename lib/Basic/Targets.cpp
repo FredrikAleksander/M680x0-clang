@@ -7046,6 +7046,91 @@ ArrayRef<const char *> MSP430TargetInfo::getGCCRegNames() const {
   return llvm::makeArrayRef(GCCRegNames);
 }
 
+class M680x0TargetInfo : public TargetInfo {
+  static const char *const GCCRegNames[];
+
+public:
+  M680x0TargetInfo(const llvm::Triple &Triple, const TargetOptions &)
+      : TargetInfo(Triple) {
+
+    std::string Layout = "";
+
+    // M680x0 is Big Endian
+    Layout += "E";
+
+    // FIXME how to wire it with the used object format?
+    Layout += "-m:e";
+
+    // M680x0 pointers are always 32 bit wide even for 16 bit cpus
+    Layout += "-p:32:32";
+
+    // M680x0 integer data types
+    Layout += "-i8:8:8-i16:16:16-i32:32:32";
+
+    // FIXME no floats at the moment
+
+    // The registers can hold 8, 16, 32 bits
+    Layout += "-n8:16:32";
+
+    // Aggregates are 32 bit aligned and stack is 16 bit aligned
+    Layout += "-a:0:32-S16";
+
+    resetDataLayout(Layout);
+
+    SizeType = UnsignedInt;
+    PtrDiffType = SignedInt;
+    IntPtrType = SignedInt;
+  }
+  void getTargetDefines(const LangOptions &Opts,
+                        MacroBuilder &Builder) const override {
+    Builder.defineMacro("M680x0");
+    Builder.defineMacro("__M680x0__");
+    Builder.defineMacro("__M68K__");
+    // FIXME: defines for different 'flavours' of MCU
+  }
+  ArrayRef<Builtin::Info> getTargetBuiltins() const override {
+    // FIXME: Implement.
+    return None;
+  }
+  bool hasFeature(StringRef Feature) const override {
+    // FIXME elaborate moar
+    return Feature == "M68000";
+  }
+  ArrayRef<const char *> getGCCRegNames() const override;
+  ArrayRef<TargetInfo::GCCRegAlias> getGCCRegAliases() const override {
+    // No aliases.
+    return None;
+  }
+  bool validateAsmConstraint(const char *&Name,
+                             TargetInfo::ConstraintInfo &info) const override {
+    // FIXME: implement
+    switch (*Name) {
+    case 'K': // the constant 1
+    case 'L': // constant -1^20 .. 1^19
+    case 'M': // constant 1-4:
+      return true;
+    }
+    // No target constraints for now.
+    return false;
+  }
+  const char *getClobbers() const override {
+    // FIXME: Is this really right?
+    return "";
+  }
+  BuiltinVaListKind getBuiltinVaListKind() const override {
+    // FIXME: implement
+    return TargetInfo::CharPtrBuiltinVaList;
+  }
+};
+
+const char *const M680x0TargetInfo::GCCRegNames[] = {
+    "d0", "d1", "d2",  "d3",  "d4",  "d5",  "d6",  "d7",
+    "a0", "a1", "a2",  "a3",  "a4",  "a5",  "a6",  "a7"};
+
+ArrayRef<const char *> M680x0TargetInfo::getGCCRegNames() const {
+  return llvm::makeArrayRef(GCCRegNames);
+}
+
 // LLVM and Clang cannot be used directly to output native binaries for
 // target, but is used to compile C code to llvm bitcode with correct
 // type and alignment information.
@@ -8315,6 +8400,9 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple,
 
   case llvm::Triple::msp430:
     return new MSP430TargetInfo(Triple, Opts);
+
+  case llvm::Triple::m680x0:
+    return new M680x0TargetInfo(Triple, Opts);
 
   case llvm::Triple::mips:
     switch (os) {
