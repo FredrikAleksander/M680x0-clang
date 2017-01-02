@@ -9419,6 +9419,9 @@ static const char *getLDMOption(const llvm::Triple &T, const ArgList &Args) {
     if (T.isOSIAMCU())
       return "elf_iamcu";
     return "elf_i386";
+  case llvm::Triple::m68k:
+  case llvm::Triple::m680x0:
+    return "m68kelf";
   case llvm::Triple::aarch64:
     return "aarch64linux";
   case llvm::Triple::aarch64_be:

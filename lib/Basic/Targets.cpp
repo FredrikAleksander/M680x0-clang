@@ -7086,6 +7086,8 @@ public:
     Builder.defineMacro("M680x0");
     Builder.defineMacro("__M680x0__");
     Builder.defineMacro("__M68K__");
+    Builder.defineMacro("__m68k__");
+    Builder.defineMacro("__mc68000__");
     // FIXME: defines for different 'flavours' of MCU
   }
   ArrayRef<Builtin::Info> getTargetBuiltins() const override {
@@ -8402,6 +8404,7 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple,
     return new MSP430TargetInfo(Triple, Opts);
 
   case llvm::Triple::m680x0:
+  case llvm::Triple::m68k:
     return new M680x0TargetInfo(Triple, Opts);
 
   case llvm::Triple::mips:

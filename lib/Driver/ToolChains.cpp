@@ -1487,6 +1487,9 @@ bool Generic_GCC::GCCInstallationDetector::getBiarchSibling(Multilib &M) const {
   // Declare a bunch of static data sets that we'll select between below. These
   // are specifically designed to always refer to string literals to avoid any
   // lifetime or initialization issues.
+  static const char *const M68KLibDirs[] = {"/lib"};
+  static const char *const M68KTriples[] = {"m68k-linux-gnu"};
+
   static const char *const AArch64LibDirs[] = {"/lib64", "/lib"};
   static const char *const AArch64Triples[] = {
       "aarch64-none-linux-gnu", "aarch64-linux-gnu", "aarch64-linux-android",
@@ -1588,6 +1591,11 @@ bool Generic_GCC::GCCInstallationDetector::getBiarchSibling(Multilib &M) const {
   }
 
   switch (TargetTriple.getArch()) {
+  case llvm::Triple::m68k:
+  case llvm::Triple::m680x0:
+    LibDirs.append(begin(M68KLibDirs), end(M68KLibDirs));
+    TripleAliases.append(begin(M68KTriples), end(M68KTriples));
+    break;
   case llvm::Triple::aarch64:
     LibDirs.append(begin(AArch64LibDirs), end(AArch64LibDirs));
     TripleAliases.append(begin(AArch64Triples), end(AArch64Triples));
@@ -4337,6 +4345,12 @@ std::string Linux::getDynamicLinker(const ArgList &Args) const {
   switch (Arch) {
   default:
     llvm_unreachable("unsupported architecture");
+
+  case llvm::Triple::m68k:
+  case llvm::Triple::m680x0:
+    LibDir = "lib";
+    Loader = "ld.so.1";
+    break;
 
   case llvm::Triple::aarch64:
     LibDir = "lib";
